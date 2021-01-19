@@ -6,6 +6,7 @@ from random import choice
 import functools
 import operator
 import matplotlib.pyplot as plt
+from multiprocessing import Process, Queue
 
 def createOptimum(Xopt, K=1):
     return  lambda X : K*e**functools.reduce(operator.add, [-((X[:,i] - x)**2) for i, x in enumerate(Xopt)])
@@ -50,30 +51,54 @@ def proportionalSelection(population):
         result[i] = population[selectedParentIndex]
     return result
 
-
-
+def run(q, populationSize, genotypes, startPoint, randRange, F, sigma):
+    population = startPoint + ((np.random.rand(populationSize, genotypes)*(2*randRange))-randRange)
+    steps = 0
+    while True:
+        max = target(population).max()
+        val1 = "{:.2f}".format(targetValue1 - max)
+        val2 = "{:.2f}".format(targetValue2 - max)
+        if targetValue2 - max < 0.01:
+            return q.put(steps)
+        elif steps >= 200:
+            return q.put(steps)
+        steps += 1
+#         print(val1, val2)
+        population = proportionalSelection(population)
+        population = ES1plus1(population, sigma)
+        population = BEST(population, F)
 
 populationSize = 10
 genotypes = 2
-lowestValue = 0
-highestValue = 0.3
-sigma = 0.4
-
-population = (np.random.rand(populationSize, genotypes)*(highestValue - lowestValue))+lowestValue
+startPoint = [0, 0]
+randRange = 0.3
+sigma = 0.2
 F = 0.4
 
 target = createTarget()
 targetValue1, targetValue2 = target(np.array([[2, 4], [4.2, 2]]))
 
-while True:
-    max = target(population).max()
-    val1 = "{:.2f}".format(targetValue1 - max)
-    val2 = "{:.2f}".format(targetValue2 - max)
-    print(val1, val2)
-    time.sleep(0.01)
-    population = proportionalSelection(population)
-    population = ES1plus1(population, sigma)
-    population = BEST(population, F)
+attempts = 1000
+sigmas = np.arange(0.1, 0.7, 0.05).tolist()
+times = []
+
+# print(run(populationSize, genotypes, startPoint, randRange, F, sigma))
+
+for xindex, sigma in enumerate(sigmas):
+    sum = 0
+    processes = []
+    q = Queue()
+    for i in range(attempts):
+        p = Process(target=run, args=(q, populationSize, genotypes, startPoint, randRange, F, sigma))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
+        sum+=q.get()
+    print(xindex)
+    times.append(sum/attempts)
 #     plt.scatter(population, target(population), marker='.')
 #     plt.pause(0.1)
 
+print(times)
