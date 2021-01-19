@@ -3,12 +3,17 @@ import sys
 import time
 from math import e
 from random import choice
+import functools
+import operator
 import matplotlib.pyplot as plt
 
-def target(X):
-    firstOptimum = e**(-((X - 2)**2))
-    secondOptimum = 2*e**(-((X - 4.2)**2))
-    return firstOptimum + secondOptimum
+def createOptimum(Xopt, K=1):
+    return  lambda X : K*e**functools.reduce(operator.add, [-((X[:,i] - x)**2) for i, x in enumerate(Xopt)])
+
+def createTarget():
+    firstOptimum = createOptimum([2, 4])
+    secondOptimum= createOptimum([4.2, 2], 2)
+    return lambda X: firstOptimum(X) + secondOptimum(X)
 
 def ES1plus1(X, sigma):
     return X + sigma*np.random.normal(0, 1, size=X.shape)
@@ -45,23 +50,27 @@ def proportionalSelection(population):
         result[i] = population[selectedParentIndex]
     return result
 
+
+
+
 populationSize = 10
-genotypes = 1
+genotypes = 2
 lowestValue = 0
 highestValue = 0.3
+sigma = 0.4
 
 population = (np.random.rand(populationSize, genotypes)*(highestValue - lowestValue))+lowestValue
-sigma = 0.4
 F = 0.4
-targetValue1 = target(2)
-targetValue2 = target(4.2)
+
+target = createTarget()
+targetValue1, targetValue2 = target(np.array([[2, 4], [4.2, 2]]))
 
 while True:
     max = target(population).max()
     val1 = "{:.2f}".format(targetValue1 - max)
     val2 = "{:.2f}".format(targetValue2 - max)
     print(val1, val2)
-    time.sleep(0.1)
+    time.sleep(0.01)
     population = proportionalSelection(population)
     population = ES1plus1(population, sigma)
     population = BEST(population, F)
