@@ -28,8 +28,8 @@ def BEST(X, F, target):
             children[index] = best
             continue
 
-        i1 = choice([i for i in range(0,9) if i not in [bestIndex, index]])
-        i2 = choice([i for i in range(0,9) if i not in [bestIndex, i1, index]])
+        i1 = choice([i for i in range(0,populationSize) if i not in [bestIndex, index]])
+        i2 = choice([i for i in range(0,populationSize) if i not in [bestIndex, i1, index]])
         children[index] = best + F*(X[i1] - X[i2])
     return children
 
@@ -67,7 +67,7 @@ def fitnessSharingForTests(x, population, target, alpha, delta):
 
 def run(q, nativeTarget, populationSize, genotypes, startPoint, randRange, F, sigma):
     np.random.seed(current_process().pid)
-    fig, ax = plt.subplots()
+#     fig, ax = plt.subplots()
     target = lambda pop: fitnessSharing(pop, nativeTarget, 0.5, 3)
 #     target = nativeTarget
     population = startPoint + ((np.random.rand(populationSize, genotypes)*(2*randRange))-randRange)
@@ -79,7 +79,7 @@ def run(q, nativeTarget, populationSize, genotypes, startPoint, randRange, F, si
         max = nativeTarget(population).max()
         val1 = "{:.2f}".format(targetValue1 - max)
         val2 = "{:.2f}".format(targetValue2 - max)
-        if max > targetValue1*0.1:
+        if max > targetValue1*1.1:
             return q.put(steps)
         if steps >= 400:
             return q.put(steps)
@@ -103,7 +103,7 @@ genotypes = 2
 startPoint = [0, 0]
 randRange = 0.3
 
-sigma = 0.5
+# sigma = 0.5
 F = 0.4
 
 attempts = 100
@@ -111,7 +111,7 @@ sigmas = np.arange(0.1, 1, 0.05).tolist()
 times = []
 
 customTarget = createTarget()
-targetValue1, targetValue2 = customTarget(np.array([[2, 4], [4.2, 2]]))
+targetValue1, targetValue2 = customTarget(np.array([[2, 2], [4.2, 2]]))
 
 # q = Queue()
 # run(q, customTarget, populationSize, genotypes, startPoint, randRange, F, sigma)
@@ -130,8 +130,19 @@ for xindex, sigma in enumerate(sigmas):
     print(xindex)
     times.append(sum/attempts)
 
-# plt.plot(sigmas, times)
-# plt.xlabel('sigma')
-# plt.ylabel('steps')
-# plt.show()
+wynikZfitnessSharing = [398.899, 363.566, 167.53, 49.243, 21.767, 13.493, 10.001, 8.059, 6.912, 6.049, 5.356, 5.033, 4.642, 4.38, 4.065, 3.907, 3.731, 3.546]
+wynikBezfitnessSharing = [400.0, 400.0, 400.0, 356.69, 160.65, 47.48, 23.01, 13.95, 10.14, 8.51, 6.67, 5.75, 5.27, 5.04, 4.7, 4.37, 4.11, 4.19]
+zFitnesSharing95 = [400.0, 359.95, 167.55, 48.75, 21.75, 16.1, 12.3, 9.05, 8.65, 7.5, 6.85, 5.95, 7.7, 7.55, 6.9, 8.8, 8.5, 6.7]
+bezFitnessSharing95 = [400.0, 400.0, 396.6, 358.5, 196.05, 40.65, 30.95, 14.9, 12.8, 9.85, 9.45, 8.05, 8.25, 6.85, 6.95, 8.25, 9.4, 8.6]
+populationSize20 = [400.0, 343.8, 76.54, 21.81, 11.64, 8.62, 6.29, 5.45, 4.57, 4.59, 4.1, 3.81, 3.4, 3.31, 3.06, 3.05, 2.95, 2.87]
+populationSize6 = [400.0, 385.74, 231.93, 101.16, 37.76, 19.91, 14.47, 11.55, 9.72, 7.61, 7.57, 6.43, 6.23, 5.95, 5.35, 4.88, 5.02, 4.94]
+populationSize10 = [400.0, 364.85, 172.11, 44.33, 23.34, 13.41, 9.74, 8.6, 6.92, 6.24, 5.51, 4.76, 4.36, 4.5, 4.15, 3.81, 3.61, 3.65]
+
+plt.plot(sigmas, populationSize6)
+plt.plot(sigmas, populationSize10)
+plt.plot(sigmas, populationSize20)
+plt.legend(["wielkość populacji: 6", "wielkość populacji: 10", "wielkość populacji: 20"])
+plt.xlabel('sigma')
+plt.ylabel('steps')
+plt.show()
 print(times)
